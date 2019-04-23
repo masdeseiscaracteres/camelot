@@ -24,6 +24,7 @@ ghostscript._gsprint - A low-level interface to the Ghostscript C-API using ctyp
 #
 
 import sys
+import os   
 from ctypes import *
 
 
@@ -224,10 +225,14 @@ def __win32_finddll():
 
 
 if sys.platform == 'win32':
-    libgs = __win32_finddll()
-    if not libgs:
+    try:
+        libgs_path = os.environ['GS_DLL']
+    except KeyError:
+        # environment variable not found
+        libgs_path = __win32_finddll()
+    if not libgs_path:
         raise RuntimeError('Please make sure that Ghostscript is installed')
-    libgs = windll.LoadLibrary(libgs)
+    libgs = windll.LoadLibrary(libgs_path)
 else:
     try:
         libgs = cdll.LoadLibrary('libgs.so')
@@ -235,9 +240,9 @@ else:
         # shared object file not found
         import ctypes.util
 
-        libgs = ctypes.util.find_library('gs')
-        if not libgs:
+        libgs_path = ctypes.util.find_library('gs')
+        if not libgs_path:
             raise RuntimeError('Please make sure that Ghostscript is installed')
-        libgs = cdll.LoadLibrary(libgs)
+        libgs = cdll.LoadLibrary(libgs_path)
 
 del __win32_finddll
